@@ -1345,113 +1345,126 @@
             
             // TRADE LINKING FUNCTIONS
             
-            linkTrades(initialSymbol = null) {
-                // Create a modal for linking trades
-                const modalHtml = `
-                <div class="modal fade" id="linkTradesModal" tabindex="-1" aria-labelledby="linkTradesModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="linkTradesModalLabel">Link Trades</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+           linkTrades(initialSymbol = null) {
+    // Create a modal for linking trades
+    const modalHtml = `
+    <div class="modal fade" id="linkTradesModal" tabindex="-1" aria-labelledby="linkTradesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="linkTradesModalLabel">Link Trades</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Symbol</label>
+                            <select class="form-select" id="linkSymbolSelect">
+                                <option value="">Select Symbol</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Buy Trades</h6>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Qty</th>
+                                            <th>Price</th>
+                                            <th>Group</th>
+                                            <th>Select</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="buyTradesTable"></tbody>
+                                </table>
                             </div>
-                            <div class="modal-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Symbol</label>
-                                        <select class="form-select" id="linkSymbolSelect">
-                                            <option value="">Select Symbol</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h6>Buy Trades</h6>
-                                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                                            <table class="table table-sm">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Date</th>
-                                                        <th>Qty</th>
-                                                        <th>Price</th>
-                                                        <th>Select</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="buyTradesTable"></tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <h6>Sell Trades</h6>
-                                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                                            <table class="table table-sm">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Date</th>
-                                                        <th>Qty</th>
-                                                        <th>Price</th>
-                                                        <th>Select</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="sellTradesTable"></tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="alert alert-info mt-3">
-                                    Select buy and sell trades to link together. The relationship will be used to calculate profit/loss.
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" id="saveLinkBtn">Link Selected Trades</button>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Sell Trades</h6>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Qty</th>
+                                            <th>Price</th>
+                                            <th>Group</th>
+                                            <th>Select</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sellTradesTable"></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Select buy and sell trades to link together. Link trades that are related to calculate accurate profit/loss.
+                    </div>
+                    <div class="alert alert-warning mt-2">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Existing group links will be removed for selected trades.
+                    </div>
                 </div>
-                `;
-                
-                // Append modal to body if it doesn't exist
-                if (!document.getElementById('linkTradesModal')) {
-                    document.body.insertAdjacentHTML('beforeend', modalHtml);
-                }
-                
-                // Initialize modal
-                this.modals.linkTradesModal = new bootstrap.Modal(document.getElementById('linkTradesModal'));
-                
-                // Populate symbols dropdown
-                const symbolSelect = document.getElementById('linkSymbolSelect');
-                symbolSelect.innerHTML = '<option value="">Select Symbol</option>';
-                
-                // Get unique symbols from trades
-                const symbols = [...new Set(this.trades.map(t => t.symbol))].sort();
-                
-                symbols.forEach(symbol => {
-                    const option = document.createElement('option');
-                    option.value = symbol;
-                    option.textContent = symbol;
-                    symbolSelect.appendChild(option);
-                });
-                
-                // Add event listener to symbol select
-                symbolSelect.addEventListener('change', () => {
-                    this.populateLinkTables(symbolSelect.value);
-                });
-                
-                // Add event listener to save link button
-                document.getElementById('saveLinkBtn').addEventListener('click', () => {
-                    this.saveTradeLinks();
-                });
-                
-                // Set initial symbol if provided
-                if (initialSymbol && symbols.includes(initialSymbol)) {
-                    symbolSelect.value = initialSymbol;
-                    this.populateLinkTables(initialSymbol);
-                }
-                
-                // Show the modal
-                this.modals.linkTradesModal.show();
-            }
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger me-auto" id="unlinkSelectedBtn">Unlink Selected</button>
+                    <button type="button" class="btn btn-primary" id="saveLinkBtn">Link Selected Trades</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+    
+    // Append modal to body if it doesn't exist
+    if (!document.getElementById('linkTradesModal')) {
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    
+    // Initialize modal
+    this.modals.linkTradesModal = new bootstrap.Modal(document.getElementById('linkTradesModal'));
+    
+    // Populate symbols dropdown
+    const symbolSelect = document.getElementById('linkSymbolSelect');
+    symbolSelect.innerHTML = '<option value="">Select Symbol</option>';
+    
+    // Get unique symbols from trades
+    const symbols = [...new Set(this.trades.map(t => t.symbol))].sort();
+    
+    symbols.forEach(symbol => {
+        const option = document.createElement('option');
+        option.value = symbol;
+        option.textContent = symbol;
+        symbolSelect.appendChild(option);
+    });
+    
+    // Add event listener to symbol select
+    symbolSelect.addEventListener('change', () => {
+        this.populateLinkTables(symbolSelect.value);
+    });
+    
+    // Add event listener to save link button
+    document.getElementById('saveLinkBtn').addEventListener('click', () => {
+        this.saveTradeLinks();
+    });
+    
+    // Add event listener to unlink button
+    document.getElementById('unlinkSelectedBtn').addEventListener('click', () => {
+        this.unlinkSelectedTrades();
+    });
+    
+    // Set initial symbol if provided
+    if (initialSymbol && symbols.includes(initialSymbol)) {
+        symbolSelect.value = initialSymbol;
+        this.populateLinkTables(initialSymbol);
+    }
+    
+    // Show the modal
+    this.modals.linkTradesModal.show();
+}
             
             // Populate the buy and sell tables based on selected symbol
             populateLinkTables(symbol) {
